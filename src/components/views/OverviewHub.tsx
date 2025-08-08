@@ -1,46 +1,72 @@
-import { Droplets, AlertCircle, Wrench, Leaf, TrendingUp, Activity } from 'lucide-react';
+import { Droplets, AlertCircle, Wrench, Leaf, TrendingUp, Activity, Loader2 } from 'lucide-react';
 import { KPICard } from '@/components/KPICard';
 import { InteractiveMap } from '@/components/InteractiveMap';
+import { useDashboardStats, useFountains, useAlerts } from '@/hooks/useSupabase';
 import heroImage from '@/assets/hero-dashboard.jpg';
 import chartFlow from '@/assets/chart-flow.jpg';
 import chartPressure from '@/assets/chart-pressure.jpg';
 
-const kpiData = [
-  {
-    title: 'Total Fountains',
-    value: 24,
-    change: '+2 new',
-    changeType: 'positive' as const,
-    icon: Droplets,
-    iconColor: 'text-primary'
-  },
-  {
-    title: 'Active Leaks',
-    value: 3,
-    change: '-1 from last week',
-    changeType: 'positive' as const,
-    icon: AlertCircle,
-    iconColor: 'text-danger'
-  },
-  {
-    title: 'Upcoming Maintenance',
-    value: 8,
-    change: 'Due this week',
-    changeType: 'neutral' as const,
-    icon: Wrench,
-    iconColor: 'text-warning'
-  },
-  {
-    title: 'Water Saved',
-    value: '2.3k L',
-    change: '+15% efficiency',
-    changeType: 'positive' as const,
-    icon: Leaf,
-    iconColor: 'text-success'
-  }
-];
-
 export function OverviewHub() {
+  const { data: stats, isLoading: statsLoading, error: statsError } = useDashboardStats();
+  const { data: fountains, isLoading: fountainsLoading } = useFountains();
+  const { data: alerts } = useAlerts(false); // Get unresolved alerts
+
+  if (statsLoading || fountainsLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (statsError) {
+    return (
+      <div className="text-center text-red-500">
+        Error loading dashboard data. Please try again.
+      </div>
+    );
+  }
+
+  // Calculate water saved (mock calculation for now)
+  const waterSaved = fountains?.reduce((total, fountain) => {
+    return total + (fountain.water_flow_rate || 0);
+  }, 0) || 0;
+
+  const kpiData = [
+    {
+      title: 'Total Fountains',
+      value: stats?.totalFountains || 0,
+      change: `${fountains?.filter(f => f.status === 'active').length || 0} active`,
+      changeType: 'positive' as const,
+      icon: Droplets,
+      iconColor: 'text-primary'
+    },
+    {
+      title: 'Active Alerts',
+      value: stats?.unresolvedAlerts || 0,
+      change: `${alerts?.filter(a => a.severity === 'critical').length || 0} critical`,
+      changeType: stats?.unresolvedAlerts && stats.unresolvedAlerts > 0 ? 'negative' as const : 'positive' as const,
+      icon: AlertCircle,
+      iconColor: 'text-danger'
+    },
+    {
+      title: 'Upcoming Maintenance',
+      value: stats?.upcomingMaintenance || 0,
+      change: 'Due this week',
+      changeType: 'neutral' as const,
+      icon: Wrench,
+      iconColor: 'text-warning'
+    },
+    {
+      title: 'Water Flow',
+      value: `${Math.round(waterSaved)} L/min`,
+      change: '+15% efficiency',
+      changeType: 'positive' as const,
+      icon: Leaf,
+      iconColor: 'text-success'
+    }
+  ];
+
   return (
     <div className="space-y-8">
       {/* Hero Section */}

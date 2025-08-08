@@ -9,19 +9,12 @@ import {
   CheckCircle,
   Clock,
   ArrowLeft,
-  Settings
+  Settings,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-
-interface SensorData {
-  flowRate: number;
-  pressure: number;
-  temperature: number;
-  pH: number;
-  batteryLevel: number;
-  lastUpdate: string;
-}
+import { useFountain, useLatestSensorReading, useSensorReadings, useAlerts } from '@/hooks/useSupabase';
 
 interface Issue {
   id: string;
@@ -42,14 +35,7 @@ interface MaintenanceRecord {
   status: 'completed' | 'pending' | 'scheduled';
 }
 
-const mockSensorData: SensorData = {
-  flowRate: 118.5,
-  pressure: 85.2,
-  temperature: 22.1,
-  pH: 7.2,
-  batteryLevel: 87,
-  lastUpdate: new Date().toLocaleString()
-};
+// Remove this mock data since we'll use real data from Supabase
 
 const mockIssues: Issue[] = [
   {
@@ -127,23 +113,28 @@ interface FountainDetailProps {
 }
 
 export function FountainDetail({ fountainId, onBack }: FountainDetailProps) {
-  const [sensorData, setSensorData] = useState(mockSensorData);
+  const { data: fountain, isLoading: fountainLoading } = useFountain(fountainId);
+  const { data: latestReading, isLoading: readingLoading } = useLatestSensorReading(fountainId);
+  const { data: sensorReadings } = useSensorReadings(fountainId, 24);
+  const { data: alerts } = useAlerts(false);
 
-  // Simulate real-time updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSensorData(prev => ({
-        ...prev,
-        flowRate: prev.flowRate + (Math.random() - 0.5) * 2,
-        pressure: prev.pressure + (Math.random() - 0.5) * 1,
-        temperature: prev.temperature + (Math.random() - 0.5) * 0.2,
-        pH: prev.pH + (Math.random() - 0.5) * 0.1,
-        lastUpdate: new Date().toLocaleString()
-      }));
-    }, 3000);
+  const fountainAlerts = alerts?.filter(alert => alert.fountain_id === fountainId) || [];
 
-    return () => clearInterval(interval);
-  }, []);
+  if (fountainLoading || readingLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!fountain) {
+    return (
+      <div className="text-center text-red-500">
+        Fountain not found.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -154,16 +145,28 @@ export function FountainDetail({ fountainId, onBack }: FountainDetailProps) {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-foreground">Central Plaza Fountain</h1>
-            <p className="text-muted-foreground">Fountain ID: {fountainId} • Zone A-1</p>
+            <h1 className="text-2xl font-bold text-foreground">{fountain.name}</h1>
+            <p className="text-muted-foreground">Fountain ID: {fountainId} • {fountain.location}</p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-success animate-pulse" />
-            <span className="text-sm font-medium text-success">Active</span>
+            <div className={cn(
+              'w-3 h-3 rounded-full animate-pulse',
+              fountain.status === 'active' ? 'bg-success' : 
+              fountain.status === 'maintenance' ? 'bg-warning' : 
+              fountain.status === 'error' ? 'bg-danger' : 'bg-muted'
+            )} />
+            <span className={cn(
+              'text-sm font-medium capitalize',
+              fountain.status === 'active' ? 'text-success' : 
+              fountain.status === 'maintenance' ? 'text-warning' : 
+              fountain.status === 'error' ? 'text-danger' : 'text-muted-foreground'
+            )}>
+              {fountain.status}
+            </span>
           </div>
         </div>
         <div className="text-sm text-muted-foreground">
-          Last updated: {sensorData.lastUpdate}
+          Last updated: {latestReading ? new Date(latestReading.recorded_at).toLocaleString() : 'No data'}
         </div>
       </div>
 
@@ -183,7 +186,7 @@ export function FountainDetail({ fountainId, onBack }: FountainDetailProps) {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Flow Rate</p>
-                  <p className="text-2xl font-bold text-foreground">{sensorData.flowRate.toFixed(1)}</p>
+                  <p className="text-2xl font-bold text-foreground">{latestReading?.flow_rate?.toFixed(1) || '0.0'}</p>
                   <p className="text-xs text-muted-foreground">L/min</p>
                 </div>
               </div>
@@ -194,7 +197,7 @@ export function FountainDetail({ fountainId, onBack }: FountainDetailProps) {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Pressure</p>
-                  <p className="text-2xl font-bold text-foreground">{sensorData.pressure.toFixed(1)}</p>
+                  <p className="text-2xl font-bold text-foreground">{latestReading?.pressure?.toFixed(1) || '0.0'}</p>
                   <p className="text-xs text-muted-foreground">PSI</p>
                 </div>
               </div>
@@ -205,7 +208,7 @@ export function FountainDetail({ fountainId, onBack }: FountainDetailProps) {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Temperature</p>
-                  <p className="text-2xl font-bold text-foreground">{sensorData.temperature.toFixed(1)}°</p>
+                  <p className="text-2xl font-bold text-foreground">{latestReading?.temperature?.toFixed(1) || '0.0'}°</p>
                   <p className="text-xs text-muted-foreground">Celsius</p>
                 </div>
               </div>
@@ -216,7 +219,7 @@ export function FountainDetail({ fountainId, onBack }: FountainDetailProps) {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Battery</p>
-                  <p className="text-2xl font-bold text-foreground">{sensorData.batteryLevel}%</p>
+                  <p className="text-2xl font-bold text-foreground">{latestReading?.battery_level || 0}%</p>
                   <p className="text-xs text-muted-foreground">Remaining</p>
                 </div>
               </div>
@@ -227,13 +230,13 @@ export function FountainDetail({ fountainId, onBack }: FountainDetailProps) {
           <div className="glass-panel p-6 rounded-xl">
             <h3 className="text-lg font-semibold text-foreground mb-6">Issue Log</h3>
             <div className="space-y-4">
-              {mockIssues.map((issue) => {
-                const severityConf = severityConfig[issue.severity];
-                const statusConf = statusConfig[issue.status];
+              {fountainAlerts.length > 0 ? fountainAlerts.map((alert) => {
+                const severityConf = severityConfig[alert.severity];
+                const statusConf = statusConfig[alert.is_resolved ? 'resolved' : 'open'];
                 const StatusIcon = statusConf.icon;
 
                 return (
-                  <div key={issue.id} className={cn(
+                  <div key={alert.id} className={cn(
                     'p-4 rounded-lg border',
                     severityConf.bgColor,
                     severityConf.borderColor
@@ -241,7 +244,7 @@ export function FountainDetail({ fountainId, onBack }: FountainDetailProps) {
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-3">
                         <StatusIcon className={cn('w-5 h-5', statusConf.color)} />
-                        <h4 className="font-medium text-foreground">{issue.title}</h4>
+                        <h4 className="font-medium text-foreground">{alert.title}</h4>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className={cn(
@@ -249,21 +252,25 @@ export function FountainDetail({ fountainId, onBack }: FountainDetailProps) {
                           severityConf.color,
                           severityConf.bgColor
                         )}>
-                          {issue.severity}
+                          {alert.severity}
                         </span>
                         <span className={cn(
                           'px-2 py-1 rounded-full text-xs font-medium capitalize',
                           statusConf.color
                         )}>
-                          {issue.status}
+                          {alert.is_resolved ? 'resolved' : 'open'}
                         </span>
                       </div>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-2">{issue.description}</p>
-                    <p className="text-xs text-muted-foreground">{issue.timestamp}</p>
+                    <p className="text-sm text-muted-foreground mb-2">{alert.description}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(alert.created_at).toLocaleString()}</p>
                   </div>
                 );
-              })}
+              }) : (
+                <div className="text-center text-muted-foreground py-8">
+                  No active alerts for this fountain.
+                </div>
+              )}
             </div>
           </div>
         </div>

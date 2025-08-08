@@ -54,15 +54,26 @@ npm run dev
 
 This project is built with:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- **Frontend**: Vite, TypeScript, React, shadcn-ui, Tailwind CSS
+- **Backend**: Supabase (PostgreSQL, Auth, Real-time)
+- **AI Integration**: API routes for predictions and maintenance analysis
+- **State Management**: React Query for server state
+- **Deployment**: Vercel (frontend) + Supabase (backend)
 
 ## How can I deploy this project?
 
+### Option 1: Deploy with Lovable
 Simply open [Lovable](https://lovable.dev/projects/4035ace2-d88f-4b05-9c8f-c88dd5f1aed9) and click on Share -> Publish.
+
+### Option 2: Deploy to Vercel (Recommended)
+1. Install Vercel CLI: `npm install -g vercel`
+2. Run: `vercel`
+3. Follow the prompts and set environment variables in Vercel dashboard
+
+### Option 3: Use the deployment script
+Run: `.\deploy.ps1` (Windows PowerShell)
+
+For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md)
 
 ## Can I connect a custom domain to my Lovable project?
 

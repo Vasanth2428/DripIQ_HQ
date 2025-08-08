@@ -1,24 +1,17 @@
 import { useState } from 'react';
-import { MapPin, Zap, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { MapPin, Zap, AlertTriangle, CheckCircle, Clock, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useFountains, useLatestSensorReading } from '@/hooks/useSupabase';
 
 interface FountainPin {
   id: string;
   name: string;
   x: number; // percentage from left
   y: number; // percentage from top
-  status: 'active' | 'leak' | 'maintenance' | 'offline';
+  status: 'active' | 'inactive' | 'maintenance' | 'error';
   flowRate: number;
   pressure: number;
 }
-
-const mockFountains: FountainPin[] = [
-  { id: '1', name: 'Central Plaza Fountain', x: 45, y: 30, status: 'active', flowRate: 120, pressure: 85 },
-  { id: '2', name: 'North Garden Fountain', x: 25, y: 20, status: 'leak', flowRate: 95, pressure: 62 },
-  { id: '3', name: 'East Park Fountain', x: 70, y: 40, status: 'maintenance', flowRate: 0, pressure: 0 },
-  { id: '4', name: 'South Court Fountain', x: 60, y: 70, status: 'active', flowRate: 110, pressure: 88 },
-  { id: '5', name: 'West Wing Fountain', x: 15, y: 60, status: 'offline', flowRate: 0, pressure: 0 },
-];
 
 const statusConfig = {
   active: { 
@@ -28,7 +21,7 @@ const statusConfig = {
     icon: CheckCircle,
     pulse: true
   },
-  leak: { 
+  error: { 
     color: 'text-danger', 
     bgColor: 'bg-danger/20', 
     borderColor: 'border-danger/50',
@@ -42,18 +35,46 @@ const statusConfig = {
     icon: Clock,
     pulse: false
   },
-  offline: { 
-    color: 'text-inactive', 
-    bgColor: 'bg-inactive/20', 
-    borderColor: 'border-inactive/50',
+  inactive: { 
+    color: 'text-muted-foreground', 
+    bgColor: 'bg-muted/20', 
+    borderColor: 'border-muted/50',
     icon: Zap,
     pulse: false
   },
 };
 
 export function InteractiveMap() {
+  const { data: fountains, isLoading } = useFountains();
   const [selectedFountain, setSelectedFountain] = useState<FountainPin | null>(null);
   const [hoveredFountain, setHoveredFountain] = useState<string | null>(null);
+
+  // Convert fountains data to map pins
+  const fountainPins: FountainPin[] = fountains?.map((fountain, index) => {
+    // Generate positions based on index (you could use actual lat/lng if available)
+    const x = 20 + (index * 15) % 60;
+    const y = 20 + (Math.floor(index / 3) * 20) % 60;
+    
+    return {
+      id: fountain.id,
+      name: fountain.name,
+      x,
+      y,
+      status: fountain.status,
+      flowRate: fountain.water_flow_rate || 0,
+      pressure: fountain.pressure_rating || 0,
+    };
+  }) || [];
+
+  if (isLoading) {
+    return (
+      <div className="glass-panel p-6 rounded-xl">
+        <div className="flex items-center justify-center h-96">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="glass-panel p-6 rounded-xl">
@@ -88,7 +109,7 @@ export function InteractiveMap() {
           <div className="absolute inset-8 border-2 border-dashed border-primary/30 rounded-lg" />
 
           {/* Fountain Pins */}
-          {mockFountains.map((fountain) => {
+          {fountainPins.map((fountain) => {
             const config = statusConfig[fountain.status];
             const Icon = config.icon;
             const isHovered = hoveredFountain === fountain.id;
