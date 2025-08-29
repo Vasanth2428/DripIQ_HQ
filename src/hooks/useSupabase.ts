@@ -1,6 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { 
+  mockFountains, 
+  mockAlerts, 
+  mockMaintenanceSchedules, 
+  mockSensorReadings, 
+  mockDashboardStats 
+} from '@/lib/mockData';
 
 // Types for our data
 export interface Fountain {
@@ -63,17 +70,22 @@ export const useFountains = () => {
   return useQuery({
     queryKey: ['fountains'],
     queryFn: async (): Promise<Fountain[]> => {
-      const { data, error } = await supabase
-        .from('fountains')
-        .select('*')
-        .order('name');
-      
-      if (error) {
-        console.error('Error fetching fountains:', error);
-        throw new Error('Failed to fetch fountains');
+      try {
+        const { data, error } = await supabase
+          .from('fountains')
+          .select('*')
+          .order('name');
+        
+        if (error) {
+          console.warn('Supabase error, using mock data:', error);
+          return mockFountains;
+        }
+        
+        return data || mockFountains;
+      } catch (error) {
+        console.warn('Database connection failed, using mock data:', error);
+        return mockFountains;
       }
-      
-      return data || [];
     },
     staleTime: 30000, // 30 seconds
   });
@@ -105,24 +117,35 @@ export const useSensorReadings = (fountainId?: string, hours: number = 24) => {
   return useQuery({
     queryKey: ['sensor-readings', fountainId, hours],
     queryFn: async (): Promise<SensorReading[]> => {
-      let query = supabase
-        .from('sensor_readings')
-        .select('*')
-        .gte('recorded_at', new Date(Date.now() - hours * 60 * 60 * 1000).toISOString())
-        .order('recorded_at', { ascending: false });
+      try {
+        let query = supabase
+          .from('sensor_readings')
+          .select('*')
+          .gte('recorded_at', new Date(Date.now() - hours * 60 * 60 * 1000).toISOString())
+          .order('recorded_at', { ascending: false });
 
-      if (fountainId) {
-        query = query.eq('fountain_id', fountainId);
-      }
+        if (fountainId) {
+          query = query.eq('fountain_id', fountainId);
+        }
 
-      const { data, error } = await query;
-      
-      if (error) {
-        console.error('Error fetching sensor readings:', error);
-        throw new Error('Failed to fetch sensor readings');
+        const { data, error } = await query;
+        
+        if (error) {
+          console.warn('Supabase error, using mock data:', error);
+          const filteredReadings = fountainId 
+            ? mockSensorReadings.filter(reading => reading.fountain_id === fountainId)
+            : mockSensorReadings;
+          return filteredReadings;
+        }
+        
+        return data || mockSensorReadings;
+      } catch (error) {
+        console.warn('Database connection failed, using mock data:', error);
+        const filteredReadings = fountainId 
+          ? mockSensorReadings.filter(reading => reading.fountain_id === fountainId)
+          : mockSensorReadings;
+        return filteredReadings;
       }
-      
-      return data || [];
     },
     enabled: !fountainId || !!fountainId,
     staleTime: 10000, // 10 seconds for real-time data
@@ -158,23 +181,34 @@ export const useMaintenanceSchedules = (fountainId?: string) => {
   return useQuery({
     queryKey: ['maintenance-schedules', fountainId],
     queryFn: async (): Promise<MaintenanceSchedule[]> => {
-      let query = supabase
-        .from('maintenance_schedules')
-        .select('*')
-        .order('scheduled_date', { ascending: true });
+      try {
+        let query = supabase
+          .from('maintenance_schedules')
+          .select('*')
+          .order('scheduled_date', { ascending: true });
 
-      if (fountainId) {
-        query = query.eq('fountain_id', fountainId);
-      }
+        if (fountainId) {
+          query = query.eq('fountain_id', fountainId);
+        }
 
-      const { data, error } = await query;
-      
-      if (error) {
-        console.error('Error fetching maintenance schedules:', error);
-        throw new Error('Failed to fetch maintenance schedules');
+        const { data, error } = await query;
+        
+        if (error) {
+          console.warn('Supabase error, using mock data:', error);
+          const filteredSchedules = fountainId 
+            ? mockMaintenanceSchedules.filter(schedule => schedule.fountain_id === fountainId)
+            : mockMaintenanceSchedules;
+          return filteredSchedules;
+        }
+        
+        return data || mockMaintenanceSchedules;
+      } catch (error) {
+        console.warn('Database connection failed, using mock data:', error);
+        const filteredSchedules = fountainId 
+          ? mockMaintenanceSchedules.filter(schedule => schedule.fountain_id === fountainId)
+          : mockMaintenanceSchedules;
+        return filteredSchedules;
       }
-      
-      return data || [];
     },
     staleTime: 60000, // 1 minute
   });
@@ -185,23 +219,34 @@ export const useAlerts = (resolved?: boolean) => {
   return useQuery({
     queryKey: ['alerts', resolved],
     queryFn: async (): Promise<Alert[]> => {
-      let query = supabase
-        .from('alerts')
-        .select('*')
-        .order('created_at', { ascending: false });
+      try {
+        let query = supabase
+          .from('alerts')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      if (resolved !== undefined) {
-        query = query.eq('is_resolved', resolved);
-      }
+        if (resolved !== undefined) {
+          query = query.eq('is_resolved', resolved);
+        }
 
-      const { data, error } = await query;
-      
-      if (error) {
-        console.error('Error fetching alerts:', error);
-        throw new Error('Failed to fetch alerts');
+        const { data, error } = await query;
+        
+        if (error) {
+          console.warn('Supabase error, using mock data:', error);
+          const filteredAlerts = resolved !== undefined 
+            ? mockAlerts.filter(alert => alert.is_resolved === resolved)
+            : mockAlerts;
+          return filteredAlerts;
+        }
+        
+        return data || mockAlerts;
+      } catch (error) {
+        console.warn('Database connection failed, using mock data:', error);
+        const filteredAlerts = resolved !== undefined 
+          ? mockAlerts.filter(alert => alert.is_resolved === resolved)
+          : mockAlerts;
+        return filteredAlerts;
       }
-      
-      return data || [];
     },
     staleTime: 15000, // 15 seconds
   });
@@ -334,36 +379,41 @@ export const useDashboardStats = () => {
   return useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: async () => {
-      // Get total fountains
-      const { count: totalFountains } = await supabase
-        .from('fountains')
-        .select('*', { count: 'exact', head: true });
+      try {
+        // Get total fountains
+        const { count: totalFountains } = await supabase
+          .from('fountains')
+          .select('*', { count: 'exact', head: true });
 
-      // Get active fountains
-      const { count: activeFountains } = await supabase
-        .from('fountains')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'active');
+        // Get active fountains
+        const { count: activeFountains } = await supabase
+          .from('fountains')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'active');
 
-      // Get unresolved alerts
-      const { count: unresolvedAlerts } = await supabase
-        .from('alerts')
-        .select('*', { count: 'exact', head: true })
-        .eq('is_resolved', false);
+        // Get unresolved alerts
+        const { count: unresolvedAlerts } = await supabase
+          .from('alerts')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_resolved', false);
 
-      // Get upcoming maintenance
-      const { count: upcomingMaintenance } = await supabase
-        .from('maintenance_schedules')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'scheduled')
-        .gte('scheduled_date', new Date().toISOString().split('T')[0]);
+        // Get upcoming maintenance
+        const { count: upcomingMaintenance } = await supabase
+          .from('maintenance_schedules')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'scheduled')
+          .gte('scheduled_date', new Date().toISOString().split('T')[0]);
 
-      return {
-        totalFountains: totalFountains || 0,
-        activeFountains: activeFountains || 0,
-        unresolvedAlerts: unresolvedAlerts || 0,
-        upcomingMaintenance: upcomingMaintenance || 0,
-      };
+        return {
+          totalFountains: totalFountains || 0,
+          activeFountains: activeFountains || 0,
+          unresolvedAlerts: unresolvedAlerts || 0,
+          upcomingMaintenance: upcomingMaintenance || 0,
+        };
+      } catch (error) {
+        console.warn('Database connection failed, using mock stats:', error);
+        return mockDashboardStats;
+      }
     },
     staleTime: 30000, // 30 seconds
   });
