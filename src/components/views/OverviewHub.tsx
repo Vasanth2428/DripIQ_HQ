@@ -1,6 +1,8 @@
 import { Droplets, AlertCircle, Wrench, Leaf, TrendingUp, Activity, Loader2 } from 'lucide-react';
 import { KPICard } from '@/components/KPICard';
 import { InteractiveMap } from '@/components/InteractiveMap';
+import { WeatherIntegration } from '@/components/WeatherIntegration';
+import { NotificationCenter } from '@/components/NotificationCenter';
 import { useDashboardStats, useFountains, useAlerts } from '@/hooks/useSupabase';
 import heroImage from '@/assets/hero-dashboard.jpg';
 import chartFlow from '@/assets/chart-flow.jpg';
@@ -88,9 +90,12 @@ export function OverviewHub() {
               Your comprehensive fountain management command center. Monitor, analyze, and control 
               all water systems with advanced real-time intelligence.
             </p>
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <div className="w-3 h-3 rounded-full bg-success animate-pulse" />
-              <span className="text-success">All systems operational</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <div className="w-3 h-3 rounded-full bg-success animate-pulse" />
+                <span className="text-success">All systems operational</span>
+              </div>
+              <NotificationCenter />
             </div>
           </div>
         </div>
@@ -169,8 +174,8 @@ export function OverviewHub() {
         </div>
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Charts and Weather Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="glass-panel p-6 rounded-xl">
           <h3 className="text-lg font-semibold text-foreground mb-4">Water Flow Analysis</h3>
           <div className="rounded-lg overflow-hidden">
@@ -191,6 +196,10 @@ export function OverviewHub() {
               className="w-full h-64 object-cover"
             />
           </div>
+        </div>
+
+        <div>
+          <WeatherIntegration />
         </div>
       </div>
     </div>

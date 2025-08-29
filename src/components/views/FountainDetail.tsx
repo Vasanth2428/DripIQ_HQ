@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useFountain, useLatestSensorReading, useSensorReadings, useAlerts } from '@/hooks/useSupabase';
+import { AIInsights } from '@/components/AIInsights';
 
 interface Issue {
   id: string;
@@ -224,6 +225,11 @@ export function FountainDetail({ fountainId, onBack }: FountainDetailProps) {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* AI Insights */}
+          <div className="glass-panel p-6 rounded-xl">
+            <AIInsights fountainId={fountainId} />
           </div>
 
           {/* Issue Log */}

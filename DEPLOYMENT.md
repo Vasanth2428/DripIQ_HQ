@@ -1,17 +1,29 @@
-# Deployment Guide for Fountain Command Center
+# 🚀 AquaSense Deployment Guide
 
 ## 🏗️ Architecture Overview
 
-Your application uses a **hybrid architecture**:
-- **Frontend**: React + Vite (deployed on hosting platform)
-- **Backend**: Supabase (cloud-hosted database, auth, real-time)
-- **Future AI**: Can be integrated via API routes or external services
+AquaSense uses a **modern serverless architecture**:
+- **Frontend**: React + TypeScript + Vite (deployed on Vercel)
+- **Backend**: Supabase (PostgreSQL, Auth, Real-time subscriptions)
+- **AI/ML**: Vercel Edge Functions for predictions and analysis
+- **Monitoring**: Built-in analytics with optional Sentry integration
 
-## Prerequisites
-Before deploying, ensure you have:
-1. ✅ Supabase database set up and running
-2. ✅ All environment variables configured
-3. ✅ Application tested locally (`npm run dev`)
+## 📋 Prerequisites
+
+Before deploying AquaSense, ensure you have:
+
+### **Required**
+1. ✅ **Node.js 18+** and npm installed
+2. ✅ **Git** for version control
+3. ✅ **Supabase account** (free tier available)
+4. ✅ **Vercel account** (free tier available)
+5. ✅ **GitHub repository** with your code
+
+### **Optional (for enhanced features)**
+6. 🌤️ **Weather API key** (OpenWeatherMap - free tier)
+7. 🗺️ **Maps API key** (Google Maps or Mapbox - for future features)
+8. 📧 **Email service** (SendGrid - for notifications)
+9. 📱 **SMS service** (Twilio - for SMS alerts)
 
 ## Deployment Options
 

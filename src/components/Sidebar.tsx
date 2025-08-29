@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Home, Calendar, FileText, Menu, X, Droplets, Settings } from 'lucide-react';
+import { Home, Calendar, FileText, Menu, X, Droplets, Settings, Brain, Wrench } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -10,7 +10,9 @@ interface SidebarProps {
 
 const navigationItems = [
   { id: 'overview', label: 'Overview Hub', icon: Home },
+  { id: 'analytics', label: 'AI Analytics', icon: Brain },
   { id: 'schedule', label: 'Schedule', icon: Calendar },
+  { id: 'technician', label: 'Technician', icon: Wrench },
   { id: 'reports', label: 'Reports', icon: FileText },
 ];
 

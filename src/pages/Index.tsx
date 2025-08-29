@@ -4,6 +4,8 @@ import { OverviewHub } from '@/components/views/OverviewHub';
 import { ScheduleView } from '@/components/views/ScheduleView';
 import { ReportsView } from '@/components/views/ReportsView';
 import { FountainDetail } from '@/components/views/FountainDetail';
+import { PredictiveAnalytics } from '@/components/views/PredictiveAnalytics';
+import { TechnicianDashboard } from '@/components/views/TechnicianDashboard';
 
 const Index = () => {
   const [currentView, setCurrentView] = useState('overview');
@@ -36,6 +38,10 @@ const Index = () => {
         return <ScheduleView />;
       case 'reports':
         return <ReportsView />;
+      case 'analytics':
+        return <PredictiveAnalytics />;
+      case 'technician':
+        return <TechnicianDashboard />;
       default:
         return <OverviewHub />;
     }
